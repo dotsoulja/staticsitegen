@@ -1,5 +1,4 @@
 import os
-import shutil
 from markdowntohtmlnode import markdown_to_html_node
 
 
@@ -16,7 +15,7 @@ def extract_title(markdown):
     return title
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using template: {template_path}")
 
     # read the markdown file and store contents in variable
@@ -35,6 +34,11 @@ def generate_page(from_path, template_path, dest_path):
     template = template.replace("{{ Title }}", title)
     template = template.replace("{{ Content }}", html)
 
+    # replace all instances of href="/ with href="{BASEPATH}
+    template = template.replace('href="/', 'href="' + basepath)
+    # replace all instances of src="/ with src="{BASEPATH}
+    template = template.replace('src="/', 'src="' + basepath)
+
     # write the new html content to the destination path
     destination_dir_path = os.path.dirname(dest_path)
     if destination_dir_path != "":
@@ -46,11 +50,11 @@ def generate_page(from_path, template_path, dest_path):
      
 
 # function that generates pages recursively
-def generate_pages_recursive(from_path, template_path, dest_path):
+def generate_pages_recursive(from_path, template_path, dest_path, basepath):
     print(f"Generating pages from {from_path} to {dest_path} using template: {template_path}")
     # check if the from_path is a file
     if os.path.isfile(from_path):
-        generate_page(from_path, template_path, dest_path)
+        generate_page(from_path, template_path, dest_path, basepath)
     # check if the from_path is a directory
     elif os.path.isdir(from_path):
         # loop through all the files in the directory
@@ -60,7 +64,7 @@ def generate_pages_recursive(from_path, template_path, dest_path):
             # create the destination path
             new_dest_path = os.path.join(dest_path, file_name.replace(".md", ".html"))
             # recursively call the function
-            generate_pages_recursive(full_path, template_path, new_dest_path)
+            generate_pages_recursive(full_path, template_path, new_dest_path, basepath)
     else:
         raise ValueError(f"{from_path} is not a valid file or directory")
     print(f"Finished generating pages from {from_path} to {dest_path}")
