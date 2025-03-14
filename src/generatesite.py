@@ -32,8 +32,8 @@ def generate_page(from_path, template_path, dest_path):
 
     title = extract_title(markdown_content)
     # replace the title and body in the template with the title and html content
-    template = template.replace("{{ title }}", title)
-    template = template.replace("{{ body }}", html)
+    template = template.replace("{{ Title }}", title)
+    template = template.replace("{{ Content }}", html)
 
     # write the new html content to the destination path
     destination_dir_path = os.path.dirname(dest_path)
@@ -44,4 +44,23 @@ def generate_page(from_path, template_path, dest_path):
     print(f"Page generated at {dest_path}")
     
      
-    
+
+# function that generates pages recursively
+def generate_pages_recursive(from_path, template_path, dest_path):
+    print(f"Generating pages from {from_path} to {dest_path} using template: {template_path}")
+    # check if the from_path is a file
+    if os.path.isfile(from_path):
+        generate_page(from_path, template_path, dest_path)
+    # check if the from_path is a directory
+    elif os.path.isdir(from_path):
+        # loop through all the files in the directory
+        for file_name in os.listdir(from_path):
+            # create the full path of the file
+            full_path = os.path.join(from_path, file_name)
+            # create the destination path
+            new_dest_path = os.path.join(dest_path, file_name.replace(".md", ".html"))
+            # recursively call the function
+            generate_pages_recursive(full_path, template_path, new_dest_path)
+    else:
+        raise ValueError(f"{from_path} is not a valid file or directory")
+    print(f"Finished generating pages from {from_path} to {dest_path}")
