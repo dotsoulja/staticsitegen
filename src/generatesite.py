@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from markdowntohtmlnode import markdown_to_html_node
 
 
@@ -16,55 +17,37 @@ def extract_title(markdown):
 
 
 def generate_page(from_path, template_path, dest_path, basepath):
-    print(f"Generating page from {from_path} to {dest_path} using template: {template_path}")
+    print(f" * {from_path} {template_path} -> {dest_path}")
+    from_file = open(from_path, "r")
+    markdown_content = from_file.read()
+    from_file.close()
 
-    # read the markdown file and store contents in variable
-    with open(from_path, "r") as file:
-        markdown_content = file.read()
-    # read the template file and store contents in variable
-    with open(template_path, "r") as file:
-        template = file.read()
+    template_file = open(template_path, "r")
+    template = template_file.read()
+    template_file.close()
 
-    # use markdown_to_html_node function and .to_html() method to convert markdown to html
     node = markdown_to_html_node(markdown_content)
     html = node.to_html()
 
     title = extract_title(markdown_content)
-    # replace the title and body in the template with the title and html content
     template = template.replace("{{ Title }}", title)
     template = template.replace("{{ Content }}", html)
-
-    # replace all instances of href="/ with href="{BASEPATH}
     template = template.replace('href="/', 'href="' + basepath)
-    # replace all instances of src="/ with src="{BASEPATH}
     template = template.replace('src="/', 'src="' + basepath)
 
-    # write the new html content to the destination path
-    destination_dir_path = os.path.dirname(dest_path)
-    if destination_dir_path != "":
-        os.makedirs(destination_dir_path, exist_ok=True)
-    with open(dest_path, "w") as file:
-        file.write(template)
-    print(f"Page generated at {dest_path}")
-    
-     
+    dest_dir_path = os.path.dirname(dest_path)
+    if dest_dir_path != "":
+        os.makedirs(dest_dir_path, exist_ok=True)
+    to_file = open(dest_path, "w")
+    to_file.write(template)
 
-# function that generates pages recursively
-def generate_pages_recursive(from_path, template_path, dest_path, basepath):
-    print(f"Generating pages from {from_path} to {dest_path} using template: {template_path}")
-    # check if the from_path is a file
-    if os.path.isfile(from_path):
-        generate_page(from_path, template_path, dest_path, basepath)
-    # check if the from_path is a directory
-    elif os.path.isdir(from_path):
-        # loop through all the files in the directory
-        for file_name in os.listdir(from_path):
-            # create the full path of the file
-            full_path = os.path.join(from_path, file_name)
-            # create the destination path
-            new_dest_path = os.path.join(dest_path, file_name.replace(".md", ".html"))
-            # recursively call the function
-            generate_pages_recursive(full_path, template_path, new_dest_path, basepath)
-    else:
-        raise ValueError(f"{from_path} is not a valid file or directory")
-    print(f"Finished generating pages from {from_path} to {dest_path}")
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
+    for filename in os.listdir(dir_path_content):
+        from_path = os.path.join(dir_path_content, filename)
+        dest_path = os.path.join(dest_dir_path, filename)
+        if os.path.isfile(from_path):
+            dest_path = Path(dest_path).with_suffix(".html")
+            generate_page(from_path, template_path, dest_path, basepath)
+        else:
+            generate_pages_recursive(from_path, template_path, dest_path, basepath)
